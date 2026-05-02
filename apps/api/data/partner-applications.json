@@ -1,0 +1,22 @@
+[
+  {
+    "id": "partner-1777294992624",
+    "submittedAt": "2026-04-27T13:03:12.624Z",
+    "fullName": "Rukhsar Seller",
+    "businessName": "Heritage Weaves",
+    "phoneNumber": "9876543210",
+    "email": "seller@example.com",
+    "cityState": "Surat, Gujarat",
+    "businessType": "wholesaler",
+    "productTypes": [
+      "Banarasi",
+      "Organza"
+    ],
+    "monthlyInventoryCapacity": "300-700",
+    "message": "We supply festive sarees.",
+    "catalogFileName": null,
+    "catalogMimeType": null,
+    "catalogSize": null,
+    "catalogStoragePath": null
+  }
+]

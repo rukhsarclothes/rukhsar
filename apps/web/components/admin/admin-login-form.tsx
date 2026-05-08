@@ -4,8 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useStore } from "@/components/providers/store-provider";
-
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1";
+import { getApiBaseUrl, getApiConfigMessage, getApiUnavailableMessage } from "@/lib/api-base-url";
 
 export function AdminLoginForm() {
   const router = useRouter();
@@ -17,6 +16,13 @@ export function AdminLoginForm() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    const apiBaseUrl = getApiBaseUrl();
+    const apiConfigMessage = getApiConfigMessage();
+
+    if (!apiBaseUrl) {
+      setError(apiConfigMessage || "Admin API URL is not configured.");
+      return;
+    }
 
     let response: Response;
     try {
@@ -26,7 +32,7 @@ export function AdminLoginForm() {
         body: JSON.stringify({ email, password })
       });
     } catch {
-      setError(`Couldn't reach the local API at ${apiBaseUrl}. Start the API server on localhost:4000 and try again.`);
+      setError(getApiUnavailableMessage(apiBaseUrl));
       return;
     }
 

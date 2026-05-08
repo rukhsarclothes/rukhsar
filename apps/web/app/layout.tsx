@@ -4,14 +4,14 @@ import { StoreProvider } from "@/components/providers/store-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Rukhsar | Aurangabad Luxury Womenswear",
-  description: "Premium women's ethnic and contemporary clothing rooted in Aurangabad's textile heritage."
+  title: "Rukhsar | Wear Your Tradition",
+  description: "Bold Gen-Z fashion rooted in traditional Indian and regional elegance."
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className="font-[family:var(--font-rukhsar-body)]">
         <StoreProvider>
           <AppShell>{children}</AppShell>
         </StoreProvider>

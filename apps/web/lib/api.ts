@@ -1,10 +1,15 @@
 import type { Coupon, Order, Product } from "@rukhsar/types";
 import { coupons as fallbackCoupons, orders as fallbackOrders, products as fallbackProducts } from "@/lib/data/store";
+import { getApiBaseUrl } from "@/lib/api-base-url";
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1";
 const isDevelopment = process.env.NODE_ENV === "development";
 
 async function getJson<T>(path: string, fallback: T): Promise<T> {
+  const apiBaseUrl = getApiBaseUrl();
+  if (!apiBaseUrl) {
+    return fallback;
+  }
+
   try {
     const response = await fetch(`${apiBaseUrl}${path}`, {
       cache: isDevelopment ? "no-store" : undefined,

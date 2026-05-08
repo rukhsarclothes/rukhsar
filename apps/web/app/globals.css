@@ -3,14 +3,23 @@
 @tailwind utilities;
 
 :root {
-  --rukhsar-saffron: #b5661d;
-  --rukhsar-ivory: #f8f1e7;
-  --rukhsar-maroon: #5a1e22;
-  --rukhsar-gold: #c2a15a;
-  --rukhsar-sand: #d8c2a0;
-  --rukhsar-ink: #1f1612;
-  --rukhsar-forest: #405047;
-  --rukhsar-card: rgba(255, 251, 246, 0.78);
+  --font-rukhsar-heading: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --font-rukhsar-body: "Aptos", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --rukhsar-black: #0f0b12;
+  --rukhsar-ink: #17121a;
+  --rukhsar-offwhite: #f8f2ec;
+  --rukhsar-ivory: #fff8f2;
+  --rukhsar-pink: #ff4fa3;
+  --rukhsar-pink-soft: #ff9fc9;
+  --rukhsar-maroon: #6c1f2e;
+  --rukhsar-mustard: #c9902f;
+  --rukhsar-gold: #c9a35f;
+  --rukhsar-beige: #d6bfaa;
+  --rukhsar-sand: #b79c84;
+  --rukhsar-forest: #224238;
+  --rukhsar-card: rgba(255, 248, 242, 0.86);
+  --rukhsar-shadow: 0 24px 60px rgba(17, 11, 18, 0.14);
+  --rukhsar-border: rgba(23, 18, 26, 0.08);
 }
 
 html {
@@ -20,11 +29,14 @@ html {
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top left, rgba(194, 161, 90, 0.2), transparent 30%),
-    radial-gradient(circle at top right, rgba(90, 30, 34, 0.08), transparent 26%),
-    linear-gradient(180deg, #fbf6ef 0%, #f7efe4 38%, #f4ede2 100%);
+    radial-gradient(circle at top left, rgba(255, 79, 163, 0.14), transparent 26%),
+    radial-gradient(circle at 82% 10%, rgba(201, 163, 95, 0.14), transparent 20%),
+    radial-gradient(circle at bottom right, rgba(34, 66, 56, 0.1), transparent 24%),
+    linear-gradient(180deg, #fff8f3 0%, #f8eee7 38%, #f6efe9 100%);
   color: var(--rukhsar-ink);
+  font-family: var(--font-rukhsar-body);
   font-feature-settings: "liga" 1, "kern" 1;
+  min-height: 100vh;
 }
 
 a {
@@ -37,12 +49,14 @@ a {
 }
 
 ::selection {
-  background: rgba(181, 102, 29, 0.2);
+  background: rgba(255, 79, 163, 0.25);
 }
 
 @layer components {
   .surface-card {
-    @apply rounded-[1.75rem] border border-white/70 bg-white/75 shadow-sm backdrop-blur-sm;
+    @apply rounded-[1.9rem] border bg-white/[0.85] backdrop-blur-md;
+    border-color: var(--rukhsar-border);
+    box-shadow: var(--rukhsar-shadow);
   }
 
   .section-shell {
@@ -50,14 +64,39 @@ a {
   }
 
   .eyebrow {
-    @apply text-xs uppercase tracking-[0.35em] text-stone-500;
+    @apply text-[11px] uppercase tracking-[0.34em] text-stone-500;
   }
 
   .cta-primary {
-    @apply rounded-full bg-[color:var(--rukhsar-maroon)] px-6 py-3 text-sm font-semibold text-[color:var(--rukhsar-ivory)] transition hover:opacity-95;
+    @apply inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white transition duration-200;
+    background: linear-gradient(135deg, var(--rukhsar-pink) 0%, #ff6bb8 45%, var(--rukhsar-maroon) 100%);
+    box-shadow: 0 16px 32px rgba(255, 79, 163, 0.26);
   }
 
   .cta-secondary {
-    @apply rounded-full border border-[rgba(90,30,34,0.18)] bg-white/70 px-6 py-3 text-sm font-semibold text-[color:var(--rukhsar-maroon)] transition hover:bg-white;
+    @apply inline-flex items-center justify-center rounded-full border px-6 py-3 text-sm font-semibold transition duration-200;
+    border-color: rgba(23, 18, 26, 0.14);
+    background: rgba(255, 255, 255, 0.7);
+    color: var(--rukhsar-ink);
+  }
+
+  .editorial-panel {
+    @apply overflow-hidden rounded-[2rem] border backdrop-blur-md;
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 28px 80px rgba(17, 11, 18, 0.24);
+  }
+
+  .fashion-chip {
+    @apply inline-flex items-center rounded-full border px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em];
+    border-color: rgba(23, 18, 26, 0.08);
+    background: rgba(255, 255, 255, 0.78);
+    color: var(--rukhsar-ink);
+  }
+
+  .luxury-grid {
+    background-image:
+      linear-gradient(rgba(23, 18, 26, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(23, 18, 26, 0.06) 1px, transparent 1px);
+    background-size: 28px 28px;
   }
 }

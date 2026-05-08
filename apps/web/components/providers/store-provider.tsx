@@ -35,37 +35,37 @@ const storageKeys = {
   adminSession: "rukhsar-admin-session"
 };
 
+function readStorage<T>(key: string, fallback: T) {
+  if (typeof window === "undefined") {
+    return fallback;
+  }
+
+  const value = window.localStorage.getItem(key);
+  if (!value) {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 export function StoreProvider({ children }: PropsWithChildren) {
-  const [cart, setCart] = useState<CartLine[]>([]);
-  const [wishlist, setWishlist] = useState<string[]>([]);
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [adminUser, setAdminUser] = useState<AuthUser | null>(null);
-  const [adminToken, setAdminToken] = useState<string | null>(null);
+  const [cart, setCart] = useState<CartLine[]>(() => readStorage<CartLine[]>(storageKeys.cart, []));
+  const [wishlist, setWishlist] = useState<string[]>(() => readStorage<string[]>(storageKeys.wishlist, []));
+  const [session, setSessionState] = useState<{ user: AuthUser | null; token: string | null }>(() =>
+    readStorage<{ user: AuthUser | null; token: string | null }>(storageKeys.session, { user: null, token: null })
+  );
+  const [adminSession, setAdminSessionState] = useState<{ user: AuthUser | null; token: string | null }>(() =>
+    readStorage<{ user: AuthUser | null; token: string | null }>(storageKeys.adminSession, { user: null, token: null })
+  );
 
-  useEffect(() => {
-    const storedCart = window.localStorage.getItem(storageKeys.cart);
-    const storedWishlist = window.localStorage.getItem(storageKeys.wishlist);
-    const storedSession = window.localStorage.getItem(storageKeys.session);
-    const storedAdminSession = window.localStorage.getItem(storageKeys.adminSession);
-
-    if (storedCart) {
-      setCart(JSON.parse(storedCart) as CartLine[]);
-    }
-    if (storedWishlist) {
-      setWishlist(JSON.parse(storedWishlist) as string[]);
-    }
-    if (storedSession) {
-      const session = JSON.parse(storedSession) as { user: AuthUser | null; token: string | null };
-      setUser(session.user);
-      setToken(session.token);
-    }
-    if (storedAdminSession) {
-      const session = JSON.parse(storedAdminSession) as { user: AuthUser | null; token: string | null };
-      setAdminUser(session.user);
-      setAdminToken(session.token);
-    }
-  }, []);
+  const user = session.user;
+  const token = session.token;
+  const adminUser = adminSession.user;
+  const adminToken = adminSession.token;
 
   useEffect(() => {
     window.localStorage.setItem(storageKeys.cart, JSON.stringify(cart));
@@ -76,12 +76,12 @@ export function StoreProvider({ children }: PropsWithChildren) {
   }, [wishlist]);
 
   useEffect(() => {
-    window.localStorage.setItem(storageKeys.session, JSON.stringify({ user, token }));
-  }, [user, token]);
+    window.localStorage.setItem(storageKeys.session, JSON.stringify(session));
+  }, [session]);
 
   useEffect(() => {
-    window.localStorage.setItem(storageKeys.adminSession, JSON.stringify({ user: adminUser, token: adminToken }));
-  }, [adminToken, adminUser]);
+    window.localStorage.setItem(storageKeys.adminSession, JSON.stringify(adminSession));
+  }, [adminSession]);
 
   const value = useMemo<StoreContextValue>(
     () => ({
@@ -124,12 +124,10 @@ export function StoreProvider({ children }: PropsWithChildren) {
         );
       },
       setSession: (nextUser, nextToken) => {
-        setUser(nextUser);
-        setToken(nextToken);
+        setSessionState({ user: nextUser, token: nextToken });
       },
       setAdminSession: (nextUser, nextToken) => {
-        setAdminUser(nextUser);
-        setAdminToken(nextToken);
+        setAdminSessionState({ user: nextUser, token: nextToken });
       },
       clearCart: () => {
         setCart([]);

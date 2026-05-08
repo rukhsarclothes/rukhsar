@@ -1,6 +1,5 @@
 import type { Coupon, Order, Product } from "@rukhsar/types";
-
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1";
+import { getApiBaseUrl, getApiConfigMessage } from "@/lib/api-base-url";
 
 export class AdminApiError extends Error {
   status: number;
@@ -82,6 +81,12 @@ type CouponPayload = {
 };
 
 async function adminRequest<T>(path: string, token: string, init?: RequestInit): Promise<T> {
+  const apiBaseUrl = getApiBaseUrl();
+  const apiConfigMessage = getApiConfigMessage();
+  if (!apiBaseUrl) {
+    throw new AdminApiError(apiConfigMessage || "Admin API URL is not configured", 500);
+  }
+
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...init,
     headers: {

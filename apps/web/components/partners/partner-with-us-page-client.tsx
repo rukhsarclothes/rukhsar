@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { getApiBaseUrl, getApiConfigMessage, getApiUnavailableMessage } from "@/lib/api-base-url";
 
 const benefits = [
   {
@@ -146,8 +147,6 @@ export function PartnerWithUsPageClient() {
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState("");
 
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1";
-
   const isFormValid = useMemo(() => Object.keys(errors).length === 0, [errors]);
 
   function toggleProductType(option: string) {
@@ -192,11 +191,18 @@ export function PartnerWithUsPageClient() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const apiBaseUrl = getApiBaseUrl();
+    const apiConfigMessage = getApiConfigMessage();
 
     const nextErrors = validateForm(form, selectedProductTypes, catalogFile);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       setStatus("Please fix the highlighted fields before submitting.");
+      return;
+    }
+
+    if (!apiBaseUrl) {
+      setStatus(apiConfigMessage || "Partner API URL is not configured.");
       return;
     }
 
@@ -234,7 +240,11 @@ export function PartnerWithUsPageClient() {
       setErrors({});
       setStatus(data.message ?? "Application submitted successfully.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Could not submit partner application");
+      setStatus(
+        error instanceof Error && error.message
+          ? error.message
+          : getApiUnavailableMessage(apiBaseUrl)
+      );
     } finally {
       setSubmitting(false);
     }
@@ -268,7 +278,7 @@ export function PartnerWithUsPageClient() {
                 "Pan-India demand",
                 "Fast partner onboarding"
               ].map((item) => (
-                <div key={item} className="rounded-[1.4rem] border border-white/10 bg-white/8 px-4 py-4 backdrop-blur transition hover:-translate-y-1 hover:bg-white/12">
+                <div key={item} className="rounded-[1.4rem] border border-white/10 bg-white/[0.08] px-4 py-4 backdrop-blur transition hover:-translate-y-1 hover:bg-white/[0.12]">
                   <p className="text-sm font-medium">{item}</p>
                 </div>
               ))}
@@ -333,7 +343,7 @@ export function PartnerWithUsPageClient() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               {growthStats.map((stat) => (
-                <div key={stat.label} className="rounded-[1.6rem] border border-white/10 bg-white/8 p-6 backdrop-blur transition hover:-translate-y-1">
+                <div key={stat.label} className="rounded-[1.6rem] border border-white/10 bg-white/[0.08] p-6 backdrop-blur transition hover:-translate-y-1">
                   <p className="font-serif text-4xl">{stat.value}</p>
                   <p className="mt-3 text-sm text-[rgba(248,241,231,0.8)]">{stat.label}</p>
                 </div>
@@ -539,7 +549,7 @@ export function PartnerWithUsPageClient() {
           <div className="grid gap-4">
             {testimonials.map((testimonial) => (
               <article key={testimonial.name} className="surface-card p-6 transition hover:-translate-y-1 hover:shadow-lg">
-                <p className="text-sm leading-7 text-stone-600">"{testimonial.quote}"</p>
+              <p className="text-sm leading-7 text-stone-600">&ldquo;{testimonial.quote}&rdquo;</p>
                 <div className="mt-4 border-t border-stone-200 pt-4">
                   <p className="font-medium text-[color:var(--rukhsar-maroon)]">{testimonial.name}</p>
                   <p className="mt-1 text-sm text-stone-500">{testimonial.role}</p>

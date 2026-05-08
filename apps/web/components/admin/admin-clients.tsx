@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
+import { type FormEvent, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Coupon, Order, Product } from "@rukhsar/types";
 import { useStore } from "@/components/providers/store-provider";
@@ -288,17 +288,17 @@ export function AdminProductsClient() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     try {
       setProducts(await getAdminProducts(token));
     } catch (error) {
       handleAdminError(error);
     }
-  }
+  }, [handleAdminError, token]);
 
   useEffect(() => {
     void refresh();
-  }, [token]);
+  }, [refresh]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -538,17 +538,17 @@ export function AdminOrdersClient() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     try {
       setOrders(await getAdminOrders(token));
     } catch (error) {
       handleAdminError(error);
     }
-  }
+  }, [handleAdminError, token]);
 
   useEffect(() => {
     void refresh();
-  }, [token]);
+  }, [refresh]);
 
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
@@ -654,17 +654,17 @@ export function AdminInventoryClient() {
   const [search, setSearch] = useState("");
   const [lowStockOnly, setLowStockOnly] = useState(false);
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     try {
       setInventory(await getAdminInventory(token));
     } catch (error) {
       handleAdminError(error);
     }
-  }
+  }, [handleAdminError, token]);
 
   useEffect(() => {
     void refresh();
-  }, [token]);
+  }, [refresh]);
 
   const filteredInventory = useMemo(() => {
     return inventory.filter((item) => {
@@ -763,17 +763,17 @@ export function AdminCouponsClient() {
   const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     try {
       setCoupons(await getAdminCoupons(token));
     } catch (error) {
       handleAdminError(error);
     }
-  }
+  }, [handleAdminError, token]);
 
   useEffect(() => {
     void refresh();
-  }, [token]);
+  }, [refresh]);
 
   const filteredCoupons = useMemo(() => {
     return coupons.filter((coupon) =>

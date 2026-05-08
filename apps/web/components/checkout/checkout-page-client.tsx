@@ -1,10 +1,11 @@
 "use client";
 
 import Script from "next/script";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CheckoutAddress, Coupon, Product } from "@rukhsar/types";
 import { useStore } from "@/components/providers/store-provider";
+import { getApiBaseUrl, getApiConfigMessage, getApiUnavailableMessage } from "@/lib/api-base-url";
 import { formatCurrency } from "@/lib/utils/currency";
 
 const steps = ["Address", "Delivery", "Payment", "Review"];
@@ -88,26 +89,33 @@ export function CheckoutPageClient({ products }: { products: Product[] }) {
   );
 
   const subtotal = lines.reduce((sum, entry) => sum + entry.product.salePrice * entry.line.quantity, 0);
+  const effectiveCoupon =
+    appliedCoupon && subtotal >= appliedCoupon.minOrderValue ? appliedCoupon : null;
+  const autoCouponMessage =
+    appliedCoupon && !effectiveCoupon
+      ? `Coupon removed because the cart subtotal fell below ${formatCurrency(appliedCoupon.minOrderValue)}.`
+      : "";
   const discount =
-    appliedCoupon === null
+    effectiveCoupon === null
       ? 0
-      : appliedCoupon.discountType === "percentage"
-        ? Math.min(Math.round((subtotal * appliedCoupon.discountValue) / 100), subtotal)
-        : Math.min(appliedCoupon.discountValue, subtotal);
+      : effectiveCoupon.discountType === "percentage"
+        ? Math.min(Math.round((subtotal * effectiveCoupon.discountValue) / 100), subtotal)
+        : Math.min(effectiveCoupon.discountValue, subtotal);
   const shipping = lines.length > 0 ? 199 : 0;
   const total = Math.max(subtotal - discount, 0) + shipping;
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1";
+  const apiBaseUrl = getApiBaseUrl();
+  const apiConfigMessage = getApiConfigMessage();
   const razorpayKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "";
-  const apiUnavailableMessage = `Couldn't reach the local API at ${apiBaseUrl}. Start the API server on localhost:4000 and try again.`;
-
-  useEffect(() => {
-    if (appliedCoupon && subtotal < appliedCoupon.minOrderValue) {
-      setAppliedCoupon(null);
-      setCouponMessage(`Coupon removed because the cart subtotal fell below ${formatCurrency(appliedCoupon.minOrderValue)}.`);
-    }
-  }, [appliedCoupon, subtotal]);
+  const apiUnavailableMessage = apiBaseUrl
+    ? getApiUnavailableMessage(apiBaseUrl)
+    : apiConfigMessage || "Checkout API URL is not configured.";
 
   async function handleApplyCoupon() {
+    if (!apiBaseUrl) {
+      setCouponMessage(apiUnavailableMessage);
+      return;
+    }
+
     if (!couponCode.trim()) {
       setCouponMessage("Enter a coupon code before applying it.");
       return;
@@ -151,6 +159,10 @@ export function CheckoutPageClient({ products }: { products: Product[] }) {
   }
 
   async function createLocalOrder(paymentStatus?: "pending" | "authorized" | "paid" | "failed" | "refunded") {
+    if (!apiBaseUrl) {
+      throw new Error(apiUnavailableMessage);
+    }
+
     let response: Response;
     try {
       response = await fetch(`${apiBaseUrl}/orders`, {
@@ -162,7 +174,7 @@ export function CheckoutPageClient({ products }: { products: Product[] }) {
           shippingAddress: address,
           paymentMethod,
           paymentStatus,
-          couponCode: appliedCoupon?.code,
+          couponCode: effectiveCoupon?.code,
           items: lines.map(({ line }) => ({
             productId: line.productId,
             quantity: line.quantity,
@@ -190,6 +202,10 @@ export function CheckoutPageClient({ products }: { products: Product[] }) {
   }
 
   async function handleRazorpayCheckout() {
+    if (!apiBaseUrl) {
+      throw new Error(apiUnavailableMessage);
+    }
+
     if (!razorpayKeyId) {
       throw new Error("Razorpay public key is missing. Add NEXT_PUBLIC_RAZORPAY_KEY_ID to your environment.");
     }
@@ -324,25 +340,33 @@ export function CheckoutPageClient({ products }: { products: Product[] }) {
   return (
     <section className="section-shell py-12">
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
-      <div className="surface-card mb-8 p-8">
+      <div className="editorial-panel mb-8 overflow-hidden px-6 py-8 text-[color:var(--rukhsar-ivory)] md:px-8 md:py-10">
         <div className="flex flex-wrap gap-3">
           {steps.map((step, index) => (
             <div
               key={step}
-              className={`rounded-full px-4 py-2 text-sm ${index === 0 ? "bg-[color:var(--rukhsar-maroon)] text-[color:var(--rukhsar-ivory)]" : "bg-white/70 text-stone-600"}`}
+              className={`rounded-full px-4 py-2 text-sm ${
+                index === 0
+                  ? "bg-[color:var(--rukhsar-pink)] text-black"
+                  : "border border-white/[0.14] bg-white/[0.08] text-white/75"
+              }`}
             >
               {index + 1}. {step}
             </div>
           ))}
         </div>
-        <h1 className="mt-6 font-serif text-4xl text-[color:var(--rukhsar-maroon)]">Checkout with confidence</h1>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-stone-600">
-          A cleaner, calmer checkout built for mobile completion, transparent totals, and trustworthy payment choice.
+        <h1 className="mt-6 max-w-3xl font-[family:var(--font-rukhsar-heading)] text-4xl leading-tight md:text-6xl">
+          Checkout made sharper, faster, and fashion-first.
+        </h1>
+        <p className="mt-4 max-w-2xl text-sm leading-8 text-white/75 md:text-base">
+          Complete your order with premium clarity across address, delivery, payment, and review.
         </p>
       </div>
       <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
         <div className="surface-card p-6 md:p-8">
-          <h2 className="font-serif text-3xl text-[color:var(--rukhsar-maroon)]">Delivery Address</h2>
+          <h2 className="font-[family:var(--font-rukhsar-heading)] text-3xl text-[color:var(--rukhsar-maroon)]">
+            Delivery Address
+          </h2>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {[
               ["fullName", "Full Name"],
@@ -354,7 +378,7 @@ export function CheckoutPageClient({ products }: { products: Product[] }) {
             ].map(([key, label]) => (
               <input
                 key={key}
-                className="rounded-2xl border border-stone-200 bg-white/80 px-4 py-3 text-sm"
+                className="rounded-[1.35rem] border border-stone-200 bg-white/[0.86] px-4 py-3 text-sm outline-none transition focus:border-[color:var(--rukhsar-pink)] focus:ring-2 focus:ring-[rgba(255,78,168,0.18)]"
                 placeholder={label}
                 value={address[key as keyof CheckoutAddress] ?? ""}
                 onChange={(event) => setAddress((current) => ({ ...current, [key]: event.target.value }))}
@@ -362,7 +386,7 @@ export function CheckoutPageClient({ products }: { products: Product[] }) {
             ))}
           </div>
           <textarea
-            className="mt-4 min-h-28 w-full rounded-2xl border border-stone-200 bg-white/80 px-4 py-3 text-sm"
+            className="mt-4 min-h-28 w-full rounded-[1.35rem] border border-stone-200 bg-white/[0.86] px-4 py-3 text-sm outline-none transition focus:border-[color:var(--rukhsar-pink)] focus:ring-2 focus:ring-[rgba(255,78,168,0.18)]"
             placeholder="Address line"
             value={address.addressLine}
             onChange={(event) => setAddress((current) => ({ ...current, addressLine: event.target.value }))}
@@ -372,14 +396,22 @@ export function CheckoutPageClient({ products }: { products: Product[] }) {
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <button
                 onClick={() => setPaymentMethod("razorpay")}
-                className={`rounded-2xl border px-4 py-4 text-left text-sm ${paymentMethod === "razorpay" ? "border-[color:var(--rukhsar-maroon)] bg-[rgba(90,30,34,0.08)]" : "border-stone-200 bg-white/70"}`}
+                className={`rounded-[1.5rem] border px-4 py-4 text-left text-sm transition ${
+                  paymentMethod === "razorpay"
+                    ? "border-[color:var(--rukhsar-pink)] bg-[rgba(255,78,168,0.1)] shadow-[0_14px_30px_rgba(255,78,168,0.14)]"
+                    : "border-stone-200 bg-white/[0.75]"
+                }`}
               >
                 Razorpay
                 <div className="mt-1 text-stone-600">UPI, cards, net banking</div>
               </button>
               <button
                 onClick={() => setPaymentMethod("cod")}
-                className={`rounded-2xl border px-4 py-4 text-left text-sm ${paymentMethod === "cod" ? "border-[color:var(--rukhsar-maroon)] bg-[rgba(90,30,34,0.08)]" : "border-stone-200 bg-white/70"}`}
+                className={`rounded-[1.5rem] border px-4 py-4 text-left text-sm transition ${
+                  paymentMethod === "cod"
+                    ? "border-[color:var(--rukhsar-pink)] bg-[rgba(255,78,168,0.1)] shadow-[0_14px_30px_rgba(255,78,168,0.14)]"
+                    : "border-stone-200 bg-white/[0.75]"
+                }`}
               >
                 Cash on Delivery
                 <div className="mt-1 text-stone-600">Available for selected preview orders</div>
@@ -390,7 +422,7 @@ export function CheckoutPageClient({ products }: { products: Product[] }) {
             <p className="eyebrow">Coupon code</p>
             <div className="mt-3 flex flex-col gap-3 md:flex-row">
               <input
-                className="flex-1 rounded-2xl border border-stone-200 bg-white/80 px-4 py-3 text-sm uppercase"
+                className="flex-1 rounded-[1.35rem] border border-stone-200 bg-white/[0.86] px-4 py-3 text-sm uppercase outline-none transition focus:border-[color:var(--rukhsar-pink)] focus:ring-2 focus:ring-[rgba(255,78,168,0.18)]"
                 placeholder="Enter coupon"
                 value={couponCode}
                 onChange={(event) => setCouponCode(event.target.value.toUpperCase())}
@@ -399,30 +431,32 @@ export function CheckoutPageClient({ products }: { products: Product[] }) {
                 type="button"
                 onClick={handleApplyCoupon}
                 disabled={applyingCoupon || subtotal <= 0}
-                className="rounded-full border border-[rgba(90,30,34,0.18)] bg-white/70 px-6 py-3 text-sm font-semibold text-[color:var(--rukhsar-maroon)] disabled:opacity-60"
+                className="rounded-full border border-[rgba(90,30,34,0.18)] bg-white/[0.82] px-6 py-3 text-sm font-semibold text-[color:var(--rukhsar-maroon)] transition hover:-translate-y-0.5 disabled:opacity-60"
               >
                 {applyingCoupon ? "Applying..." : "Apply Coupon"}
               </button>
-              {appliedCoupon ? (
+              {effectiveCoupon ? (
                 <button
                   type="button"
                   onClick={() => {
                     setAppliedCoupon(null);
                     setCouponMessage("Coupon removed.");
                   }}
-                  className="rounded-full border border-stone-200 px-6 py-3 text-sm text-stone-600"
+                  className="rounded-full border border-stone-200 bg-white/[0.78] px-6 py-3 text-sm text-stone-600 transition hover:-translate-y-0.5"
                 >
                   Remove
                 </button>
               ) : null}
             </div>
-            {couponMessage ? <p className="mt-3 text-sm text-[color:var(--rukhsar-maroon)]">{couponMessage}</p> : null}
+            {couponMessage || autoCouponMessage ? (
+              <p className="mt-3 text-sm text-[color:var(--rukhsar-maroon)]">{couponMessage || autoCouponMessage}</p>
+            ) : null}
           </div>
           {status ? <p className="mt-5 text-sm text-[color:var(--rukhsar-maroon)]">{status}</p> : null}
         </div>
-        <aside className="surface-card h-fit p-6 lg:sticky lg:top-28">
-          <h2 className="font-serif text-2xl text-[color:var(--rukhsar-maroon)]">Summary</h2>
-          <div className="mt-5 space-y-3 text-sm text-stone-600">
+        <aside className="editorial-panel h-fit px-6 py-6 text-[color:var(--rukhsar-ivory)] lg:sticky lg:top-28">
+          <h2 className="font-[family:var(--font-rukhsar-heading)] text-3xl">Summary</h2>
+          <div className="mt-5 space-y-3 text-sm text-white/75">
             {lines.map(({ line, product }) => (
               <div key={`${product.id}-${line.size ?? "default"}`} className="flex justify-between gap-3">
                 <span>{product.name} x {line.quantity}</span>
@@ -435,20 +469,28 @@ export function CheckoutPageClient({ products }: { products: Product[] }) {
             </div>
             {discount > 0 ? (
               <div className="flex justify-between">
-                <span>Discount {appliedCoupon ? `(${appliedCoupon.code})` : ""}</span>
+                <span>Discount {effectiveCoupon ? `(${effectiveCoupon.code})` : ""}</span>
                 <span>-{formatCurrency(discount)}</span>
               </div>
             ) : null}
-            <div className="flex justify-between border-t border-stone-200 pt-3 font-semibold text-[color:var(--rukhsar-maroon)]">
+            <div className="flex justify-between border-t border-white/[0.14] pt-3 font-semibold text-white">
               <span>Total</span>
               <span>{formatCurrency(total)}</span>
             </div>
           </div>
-          <div className="mt-6 space-y-3 text-sm text-stone-600">
-            <div className="rounded-2xl bg-[#faf6f1] p-4">Secure payment flow powered for Indian shoppers</div>
-            <div className="rounded-2xl bg-[#faf6f1] p-4">Order tracking available immediately after placement</div>
+          <div className="mt-6 space-y-3 text-sm text-white/75">
+            <div className="rounded-[1.4rem] border border-white/[0.12] bg-white/[0.06] p-4">
+              Secure payment flow powered for Indian shoppers
+            </div>
+            <div className="rounded-[1.4rem] border border-white/[0.12] bg-white/[0.06] p-4">
+              Order tracking available immediately after placement
+            </div>
           </div>
-          <button onClick={handlePlaceOrder} disabled={submitting} className="cta-primary mt-6 w-full disabled:opacity-70">
+          <button
+            onClick={handlePlaceOrder}
+            disabled={submitting}
+            className="mt-6 w-full rounded-full bg-[color:var(--rukhsar-pink)] px-6 py-3 text-sm font-semibold text-black transition hover:-translate-y-0.5 disabled:opacity-70"
+          >
             {submitting ? "Placing Order..." : "Place Order"}
           </button>
         </aside>

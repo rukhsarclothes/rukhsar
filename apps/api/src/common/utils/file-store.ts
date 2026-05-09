@@ -521,17 +521,51 @@ export function createOrder(input: {
   const orderNumber = `RUK${10000 + store.orders.length + 1}`;
   const createdAt = new Date().toISOString();
   const orderItems: OrderItem[] = input.items.map((item) => {
-    const product = store.products.find((entry) => entry.id === item.productId);
+    const product = store.products.find(
+      (entry) => entry.id === item.productId && (entry.status ?? "active") === "active"
+    );
     const variant = product?.variants.find((entry) => entry.size === item.size);
+    if (!product) {
+      throw new Error(`Product not found or unavailable: ${item.productId}`);
+    }
+    if (item.size && !variant) {
+      throw new Error(`Size ${item.size} is not available for ${product.name}`);
+    }
+    const availableStock = item.size
+      ? (variant?.stock ?? 0)
+      : product.variants.reduce((sum, entry) => sum + entry.stock, 0);
+    if (availableStock < item.quantity) {
+      throw new Error(`Only ${availableStock} unit(s) available for ${product.name}`);
+    }
+
     return {
       productId: item.productId,
-      productName: product?.name ?? "Rukhsar Product",
+      productName: product.name,
       quantity: item.quantity,
-      unitPrice: product?.salePrice ?? 2999,
+      unitPrice: product.salePrice,
       size: item.size,
-      color: variant?.color ?? product?.color
+      color: variant?.color ?? product.color
     };
   });
+
+  for (const item of input.items) {
+    const product = store.products.find((entry) => entry.id === item.productId)!;
+    if (item.size) {
+      const variant = product.variants.find((entry) => entry.size === item.size)!;
+      variant.stock -= item.quantity;
+      continue;
+    }
+
+    let remaining = item.quantity;
+    for (const variant of product.variants) {
+      const decrement = Math.min(variant.stock, remaining);
+      variant.stock -= decrement;
+      remaining -= decrement;
+      if (remaining === 0) {
+        break;
+      }
+    }
+  }
 
   const order: Order = {
     id: `o${Date.now()}`,

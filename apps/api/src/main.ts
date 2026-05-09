@@ -23,7 +23,7 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: [env.siteUrl, "http://localhost:3000", "http://localhost:3005"],
+    origin: env.allowedOrigins,
     credentials: true
   })
 );
@@ -31,7 +31,12 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 app.get("/health", (_request, response) => {
-  response.json({ success: true, status: "ok" });
+  response.json({
+    success: true,
+    status: "ok",
+    storageProvider: env.storageProvider,
+    environment: env.nodeEnv
+  });
 });
 
 app.use("/api/v1/auth", authRouter);

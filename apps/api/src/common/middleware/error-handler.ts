@@ -22,7 +22,12 @@ export function errorHandler(error: unknown, _request: Request, response: Respon
     return;
   }
 
-  const message = error instanceof Error ? error.message : "Unexpected server error";
+  const message =
+    process.env.NODE_ENV === "production"
+      ? "Unexpected server error"
+      : error instanceof Error
+        ? error.message
+        : "Unexpected server error";
   response.status(500).json({
     success: false,
     message

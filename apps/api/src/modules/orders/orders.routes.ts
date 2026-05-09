@@ -39,7 +39,7 @@ router.post("/", (request, response) => {
     paymentStatus: z.enum(["pending", "authorized", "paid", "failed", "refunded"]).optional()
   }).parse(request.body);
 
-  const productsById = new Map(getProducts({ includeArchived: true }).map((product) => [product.id, product]));
+  const productsById = new Map(getProducts().map((product) => [product.id, product]));
   const missingItem = payload.items.find((item) => !productsById.has(item.productId));
   if (missingItem) {
     response.status(400).json({ success: false, message: `Product not found: ${missingItem.productId}` });
@@ -93,19 +93,28 @@ router.post("/", (request, response) => {
     : 0;
   const shippingAmount = payload.items.length > 0 ? 199 : 0;
   const totalAmount = Math.max(subtotal - discountAmount, 0) + shippingAmount;
-  const order = createOrder({
-    customerName: payload.customerName,
-    customerEmail: payload.customerEmail,
-    subtotal,
-    discountAmount,
-    shippingAmount,
-    totalAmount,
-    paymentMethod: payload.paymentMethod,
-    paymentStatus: payload.paymentStatus,
-    couponCode: coupon?.code,
-    shippingAddress: payload.shippingAddress,
-    items: payload.items
-  });
+  let order;
+  try {
+    order = createOrder({
+      customerName: payload.customerName,
+      customerEmail: payload.customerEmail,
+      subtotal,
+      discountAmount,
+      shippingAmount,
+      totalAmount,
+      paymentMethod: payload.paymentMethod,
+      paymentStatus: payload.paymentStatus,
+      couponCode: coupon?.code,
+      shippingAddress: payload.shippingAddress,
+      items: payload.items
+    });
+  } catch (error) {
+    response.status(409).json({
+      success: false,
+      message: error instanceof Error ? error.message : "Unable to create order"
+    });
+    return;
+  }
 
   response.status(201).json({
     success: true,

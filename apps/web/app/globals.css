@@ -52,6 +52,15 @@ a {
   background: rgba(255, 79, 163, 0.25);
 }
 
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgba(255, 79, 163, 0.7);
+  outline-offset: 3px;
+}
+
 @layer components {
   .surface-card {
     @apply rounded-[1.9rem] border bg-white/[0.85] backdrop-blur-md;

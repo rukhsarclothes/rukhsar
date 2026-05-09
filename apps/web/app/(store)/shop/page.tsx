@@ -8,6 +8,7 @@ type ShopPageProps = {
     collection?: string;
     fabric?: string;
     price?: string;
+    search?: string;
     sort?: string;
   }>;
 };
@@ -42,6 +43,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const selectedCollection = params.collection ?? "all";
   const selectedFabric = params.fabric ?? "all";
   const selectedPrice = params.price ?? "all";
+  const selectedSearch = params.search?.trim() ?? "";
   const selectedSort = params.sort ?? "newest";
 
   const categories = [...new Set(products.map((product) => product.category))].sort((left, right) =>
@@ -55,6 +57,22 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   );
 
   const filteredProducts = products
+    .filter((product) =>
+      !selectedSearch
+        ? true
+        : [
+            product.name,
+            product.category,
+            product.collection,
+            product.fabric,
+            product.color,
+            product.description,
+            product.longDescription
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(selectedSearch.toLowerCase())
+    )
     .filter((product) => selectedCategory === "all" || product.category === selectedCategory)
     .filter((product) => selectedCollection === "all" || product.collection === selectedCollection)
     .filter((product) => selectedFabric === "all" || product.fabric === selectedFabric)
@@ -82,7 +100,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
             <h1 className="font-[family:var(--font-rukhsar-heading)] text-4xl font-semibold leading-tight md:text-6xl">
-              New Arrivals
+              {selectedSearch ? `Results for “${selectedSearch}”` : "New Arrivals"}
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-white/72 md:text-base">
               A sharper traditional wear catalog with quick filters, bold product styling, and a fashion-app rhythm
@@ -120,12 +138,41 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             );
           })}
         </div>
+
+        <form className="mt-6 flex flex-col gap-3 sm:flex-row" action="/shop">
+          <input
+            type="search"
+            name="search"
+            defaultValue={selectedSearch}
+            placeholder="Search by style name, fabric, color, or collection"
+            className="min-w-0 flex-1 rounded-full border border-white/[0.14] bg-white/[0.08] px-5 py-3 text-sm text-white outline-none placeholder:text-white/50"
+          />
+          <button
+            className="rounded-full bg-[color:var(--rukhsar-pink)] px-6 py-3 text-sm font-semibold text-white"
+            type="submit"
+          >
+            Search Catalog
+          </button>
+        </form>
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[300px_1fr]">
         <aside className="surface-card h-fit p-6 lg:sticky lg:top-28">
           <p className="eyebrow">Refine the edit</p>
           <form className="mt-5 space-y-4">
+            <label className="block text-sm text-stone-700">
+              <span className="mb-2 block font-semibold uppercase tracking-[0.14em] text-[color:var(--rukhsar-ink)]">
+                Search
+              </span>
+              <input
+                type="search"
+                name="search"
+                defaultValue={selectedSearch}
+                className="w-full rounded-2xl border border-black/8 bg-white px-4 py-3"
+                placeholder="Search the collection"
+              />
+            </label>
+
             <label className="block text-sm text-stone-700">
               <span className="mb-2 block font-semibold uppercase tracking-[0.14em] text-[color:var(--rukhsar-ink)]">
                 Category
@@ -231,7 +278,11 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         <div>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3 text-sm text-stone-600">
             <span>{filteredProducts.length} styles available</span>
-            <span>Wishlist-ready | Fast add-to-bag | Fashion-first browsing</span>
+            <span>
+              {selectedSearch
+                ? `Search tuned for "${selectedSearch}"`
+                : "Wishlist-ready | Fast add-to-bag | Fashion-first browsing"}
+            </span>
           </div>
 
           {filteredProducts.length === 0 ? (
@@ -240,7 +291,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                 No styles match this filter set
               </p>
               <p className="mt-4 text-sm text-stone-600">
-                Try widening the price range or resetting the current category and collection filters.
+                Try widening the price range, simplifying the search term, or resetting the current filters.
               </p>
               <Link href="/shop" className="cta-primary mt-6 inline-flex">
                 Clear Filters

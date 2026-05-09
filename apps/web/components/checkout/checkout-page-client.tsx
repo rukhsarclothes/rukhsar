@@ -220,7 +220,12 @@ export function CheckoutPageClient({ products }: { products: Product[] }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: total * 100,
+          items: lines.map(({ line }) => ({
+            productId: line.productId,
+            quantity: line.quantity,
+            size: line.size
+          })),
+          couponCode: effectiveCoupon?.code,
           currency: "INR",
           receipt: `rukhsar-${Date.now()}`
         })
@@ -235,6 +240,9 @@ export function CheckoutPageClient({ products }: { products: Product[] }) {
         order_id: string;
         amount: number;
         currency: string;
+        totals?: {
+          totalAmount: number;
+        };
       };
       message?: string;
     };
@@ -244,6 +252,9 @@ export function CheckoutPageClient({ products }: { products: Product[] }) {
     }
 
     const createdOrder = orderData.item;
+    if (createdOrder.totals && createdOrder.totals.totalAmount !== total) {
+      throw new Error("Cart total changed. Refresh checkout and review the latest price before paying.");
+    }
 
     await new Promise<void>((resolve, reject) => {
       const razorpay = new window.Razorpay!({

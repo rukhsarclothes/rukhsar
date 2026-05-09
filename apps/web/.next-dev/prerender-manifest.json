@@ -1,1 +1,11 @@
-{"version":4,"routes":{"/product/admin-test-kurta":{},"/product/noor-himroo-jacket-set":{},"/product/paithani-bloom-saree":{},"/product/mashru-everyday-kurta":{}},"dynamicRoutes":{"/product/[slug]":{"dataRoute":null,"dataRouteRegex":null,"fallback":null,"fallbackRevalidate":false,"fallbackSourceRoute":"/product/[slug]","routeRegex":"^\\/product\\/([^/]+?)(?:\\/)?$","allowHeader":[]}},"notFoundRoutes":[],"preview":{"previewModeId":"2409417d728d2371a3a4efe3d38b891b","previewModeSigningKey":"6d701128ab1d58ac787e2722b668fd8fc94b99ac4f3bec4133e8b7819277221c","previewModeEncryptionKey":"830816917ddd20e173ded2135e61e646654931b7c1e0ecb5c24fdb0148f1915d"}}
+{
+  "version": 4,
+  "routes": {},
+  "dynamicRoutes": {},
+  "notFoundRoutes": [],
+  "preview": {
+    "previewModeId": "aeb6a75348b17c4f37599a3f9cb0e67c",
+    "previewModeSigningKey": "71b1b087c19abe10d822b32a9ba7198c0a607671a3e9da2e83be26b78990b978",
+    "previewModeEncryptionKey": "7713e113d9b422a7fc306dc4d78d49151c71fdf58ee50afbfc8dfc236c760a33"
+  }
+}

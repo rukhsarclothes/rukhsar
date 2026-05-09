@@ -36,11 +36,17 @@ export function AdminLoginForm() {
       return;
     }
 
-    const data = (await response.json()) as {
+    let data: {
       user?: { id: string; fullName: string; email: string; role: "customer" | "admin" };
       accessToken?: string;
       message?: string;
     };
+    try {
+      data = (await response.json()) as typeof data;
+    } catch {
+      setError("Admin API returned an invalid response. Check NEXT_PUBLIC_API_URL in Vercel.");
+      return;
+    }
 
     if (!response.ok || !data.user || !data.accessToken) {
       setError(data.message ?? "Admin login failed");

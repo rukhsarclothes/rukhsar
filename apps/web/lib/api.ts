@@ -4,10 +4,10 @@ import { getApiBaseUrl } from "@/lib/api-base-url";
 
 const isDevelopment = process.env.NODE_ENV === "development";
 
-async function getJson<T>(path: string, fallback: T): Promise<T> {
+async function getJson<T>(path: string, fallback: T, productionFallback: T): Promise<T> {
   const apiBaseUrl = getApiBaseUrl();
   if (!apiBaseUrl) {
-    return fallback;
+    return isDevelopment ? fallback : productionFallback;
   }
 
   try {
@@ -17,26 +17,30 @@ async function getJson<T>(path: string, fallback: T): Promise<T> {
     });
 
     if (!response.ok) {
-      return fallback;
+      return isDevelopment ? fallback : productionFallback;
     }
 
     const data = (await response.json()) as { items?: T; item?: T };
     return (data.items ?? data.item ?? fallback) as T;
   } catch {
-    return fallback;
+    return isDevelopment ? fallback : productionFallback;
   }
 }
 
 export function getProducts() {
-  return getJson<Product[]>("/products", fallbackProducts);
+  return getJson<Product[]>("/products", fallbackProducts, []);
 }
 
 export function getProduct(slug: string) {
-  return getJson<Product | null>(`/products/${slug}`, fallbackProducts.find((product) => product.slug === slug) ?? null);
+  return getJson<Product | null>(
+    `/products/${slug}`,
+    fallbackProducts.find((product) => product.slug === slug) ?? null,
+    null
+  );
 }
 
 export function getCoupons() {
-  return getJson<Coupon[]>("/coupons", fallbackCoupons);
+  return getJson<Coupon[]>("/coupons", fallbackCoupons, []);
 }
 
 export function getFallbackOrders(): Order[] {

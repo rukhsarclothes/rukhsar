@@ -8,6 +8,14 @@ function isLocalHostname(hostname: string) {
   return hostname === "localhost" || hostname === "127.0.0.1";
 }
 
+function isProductionBrowserOnRemoteHost() {
+  return (
+    typeof window !== "undefined" &&
+    process.env.NODE_ENV === "production" &&
+    !isLocalHostname(window.location.hostname)
+  );
+}
+
 function getConfiguredApiBaseUrl() {
   if (!process.env.NEXT_PUBLIC_API_URL) {
     return "";
@@ -21,7 +29,11 @@ export function getApiBaseUrl() {
   if (configuredApiBaseUrl) {
     try {
       const hostname = new URL(configuredApiBaseUrl).hostname;
-      if (typeof window === "undefined" && process.env.NODE_ENV === "production" && isLocalHostname(hostname)) {
+      if (
+        process.env.NODE_ENV === "production" &&
+        isLocalHostname(hostname) &&
+        (typeof window === "undefined" || isProductionBrowserOnRemoteHost())
+      ) {
         return "";
       }
     } catch {
@@ -47,7 +59,11 @@ export function getApiConfigMessage() {
   if (configuredApiBaseUrl) {
     try {
       const hostname = new URL(configuredApiBaseUrl).hostname;
-      if (typeof window === "undefined" && process.env.NODE_ENV === "production" && isLocalHostname(hostname)) {
+      if (
+        process.env.NODE_ENV === "production" &&
+        isLocalHostname(hostname) &&
+        (typeof window === "undefined" || isProductionBrowserOnRemoteHost())
+      ) {
         return "The build environment is using a localhost API URL. Set NEXT_PUBLIC_API_URL to a deployed API base URL for production builds.";
       }
     } catch {

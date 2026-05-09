@@ -93,6 +93,15 @@ export function ProductCard({ product }: { product: Product }) {
 
         <p className="mt-3 line-clamp-2 text-sm leading-6 text-stone-600">{product.description}</p>
 
+        <div className="mt-4 flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.2em] text-stone-500">
+          <span className="rounded-full bg-[rgba(255,79,163,0.08)] px-3 py-1 text-[color:var(--rukhsar-maroon)]">
+            {product.reviewCount} reviews
+          </span>
+          <span className="rounded-full bg-[rgba(201,163,95,0.12)] px-3 py-1">
+            Size {preferredSize} ready
+          </span>
+        </div>
+
         <div className="mt-5 flex items-end justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 text-sm">
@@ -105,7 +114,7 @@ export function ProductCard({ product }: { product: Product }) {
             href={`/product/${product.slug}`}
             className="rounded-full border border-black/8 bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--rukhsar-ink)] transition group-hover:bg-[color:var(--rukhsar-pink)] group-hover:text-white"
           >
-            View
+            View Details
           </Link>
         </div>
       </div>
